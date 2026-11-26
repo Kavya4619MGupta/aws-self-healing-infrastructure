@@ -1,0 +1,17 @@
+# Terraform state and cache
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!terraform.tfvars.example
+.terraform.lock.hcl
+
+# Generated SSH keys and dynamic Ansible runtime files
+.ssh/
+ansible/inventory/hosts.ini
+ansible/group_vars/all/generated.yml
+*.retry
+
+# OS / Editor
+.DS_Store
+Thumbs.db

@@ -1,0 +1,35 @@
+---
+- name: Apply common baseline to all hosts
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - common
+
+- name: Configure Nginx Load Balancer
+  hosts: lb_server
+  become: true
+  gather_facts: true
+  roles:
+    - lb
+
+- name: Configure Web Servers
+  hosts: web_nodes
+  become: true
+  gather_facts: true
+  roles:
+    - webserver
+
+- name: Install NRPE on Web Servers
+  hosts: web_nodes
+  become: true
+  gather_facts: true
+  roles:
+    - nrpe_agent
+
+- name: Configure Nagios Monitoring Server
+  hosts: nagios_server
+  become: true
+  gather_facts: true
+  roles:
+    - nagios_server

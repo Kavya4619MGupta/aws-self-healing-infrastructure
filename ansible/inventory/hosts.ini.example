@@ -1,0 +1,12 @@
+# Example inventory (auto-generated into hosts.ini when `terraform apply` runs)
+[nagios]
+aws-auto-infra-dev-nagios-server ansible_host=13.48.0.10 private_ip=10.0.1.10 az=eu-north-1a
+
+[webservers]
+aws-auto-infra-dev-web-node-1 ansible_host=13.48.0.11 private_ip=10.0.1.11 az=eu-north-1a
+aws-auto-infra-dev-web-node-2 ansible_host=13.48.0.12 private_ip=10.0.2.12 az=eu-north-1b
+
+[all:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=../.ssh/aws-auto-infra-dev-key.pem
+ansible_python_interpreter=/usr/bin/python3

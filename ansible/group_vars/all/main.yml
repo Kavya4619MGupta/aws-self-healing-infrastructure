@@ -1,0 +1,18 @@
+---
+# Timezone
+system_timezone: "UTC"
+
+# Nagios config
+nagios_admin_user: nagiosadmin
+nrpe_port: 5666
+nagios_config_dir: /etc/nagios4
+nagios_conf_d: /etc/nagios4/conf.d
+event_handler_dir: /usr/lib/nagios/plugins/eventhandlers
+recovery_playbook_dir: /opt/ansible/recovery
+
+# App config
+app_name: "Self-Healing Web Infrastructure"
+project_title: "Automated Self-Healing, Secure and Fault-Tolerant Web Infrastructure"
+
+# UFW
+ufw_enabled: true

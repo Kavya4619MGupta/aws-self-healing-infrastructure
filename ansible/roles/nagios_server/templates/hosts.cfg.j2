@@ -1,0 +1,36 @@
+define hostgroup {
+    hostgroup_name  web-servers
+    alias           Backend Web Servers
+    members         {% for node in web_nodes %}web-node-{{ loop.index }}{% if not loop.last %},{% endif %}{% endfor %}
+
+}
+
+define hostgroup {
+    hostgroup_name  lb-servers
+    alias           Load Balancer Servers
+    members         lb-server
+}
+
+define host {
+    use                 linux-server
+    host_name           lb-server
+    alias               Nginx Load Balancer
+    address             {{ lb_server.private_ip }}
+    max_check_attempts  3
+    check_period        24x7
+    notification_period 24x7
+    contacts            nagiosadmin
+}
+
+{% for node in web_nodes %}
+define host {
+    use                 linux-server
+    host_name           web-node-{{ loop.index }}
+    alias               Web Server {{ loop.index }}
+    address             {{ node.private_ip }}
+    max_check_attempts  3
+    check_period        24x7
+    notification_period 24x7
+    contacts            nagiosadmin
+}
+{% endfor %}

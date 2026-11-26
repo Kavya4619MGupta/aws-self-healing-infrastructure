@@ -1,0 +1,14 @@
+define command {
+    command_name    check_nrpe
+    command_line    /usr/lib/nagios/plugins/check_nrpe -H $HOSTADDRESS$ -t 30 -c $ARG1$
+}
+
+define command {
+    command_name    check_http_string
+    command_line    /usr/lib/nagios/plugins/check_http -H $HOSTADDRESS$ -u $ARG1$ -s "$ARG2$"
+}
+
+define command {
+    command_name    restart_nginx_event_handler
+    command_line    {{ event_handler_dir }}/restart_nginx.sh $HOSTADDRESS$ $SERVICESTATE$ $SERVICESTATETYPE$ $SERVICEATTEMPT$
+}

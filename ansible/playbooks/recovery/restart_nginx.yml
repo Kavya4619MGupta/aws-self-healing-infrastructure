@@ -1,0 +1,44 @@
+---
+- name: Automated Nginx Recovery
+  hosts: "{{ ansible_limit | default('web_nodes') }}"
+  become: true
+  gather_facts: true
+  tasks:
+    - name: Log recovery start
+      ansible.builtin.shell: |
+        echo "$(date) Recovery started for {{ inventory_hostname }}" >> /var/log/nagios/recovery.log
+      changed_when: false
+
+    - name: Stop nginx service
+      ansible.builtin.service:
+        name: nginx
+        state: stopped
+
+    - name: Wait 3 seconds before restart
+      ansible.builtin.pause:
+        seconds: 3
+
+    - name: Start nginx service
+      ansible.builtin.service:
+        name: nginx
+        state: started
+        enabled: true
+
+    - name: Wait for nginx to be ready
+      ansible.builtin.wait_for:
+        port: 80
+        timeout: 30
+
+    - name: Verify /health endpoint responds
+      ansible.builtin.uri:
+        url: "http://{{ inventory_hostname }}/health"
+        return_content: true
+        status_code: 200
+      register: health_check
+      retries: 3
+      delay: 5
+
+    - name: Log recovery success
+      ansible.builtin.shell: |
+        echo "$(date) Recovery SUCCESS for {{ inventory_hostname }}: {{ health_check.content }}" >> /var/log/nagios/recovery.log
+      changed_when: false

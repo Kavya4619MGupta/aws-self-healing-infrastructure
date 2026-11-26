@@ -1,0 +1,185 @@
+---
+- name: Install Nagios packages
+  ansible.builtin.apt:
+    name:
+      - nagios4
+      - nagios4-plugins
+      - nagios-plugins-contrib
+      - apache2
+      - python3-passlib
+    state: present
+    update_cache: true
+
+- name: Enable Apache mod_cgi
+  ansible.builtin.command: a2enmod cgi
+  changed_when: true
+  notify: Restart apache2
+
+- name: Enable Apache mod_cgid
+  ansible.builtin.command: a2enmod cgid
+  changed_when: true
+  notify: Restart apache2
+
+- name: Enable Apache mod_authz_groupfile
+  ansible.builtin.command: a2enmod authz_groupfile
+  changed_when: true
+  notify: Restart apache2
+
+- name: Set nagiosadmin htpasswd
+  ansible.builtin.command: >
+    htpasswd -bc /etc/nagios4/htpasswd.users {{ nagios_admin_user }} {{ nagios_admin_password }}
+  changed_when: true
+  no_log: true
+
+- name: Configure cgi.cfg — use_authentication
+  ansible.builtin.lineinfile:
+    path: /etc/nagios4/cgi.cfg
+    regexp: '^use_authentication='
+    line: 'use_authentication=1'
+    state: present
+
+- name: Configure cgi.cfg — authorized_for_system_information
+  ansible.builtin.lineinfile:
+    path: /etc/nagios4/cgi.cfg
+    regexp: '^authorized_for_system_information='
+    line: 'authorized_for_system_information=nagiosadmin'
+
+- name: Configure cgi.cfg — authorized_for_configuration_information
+  ansible.builtin.lineinfile:
+    path: /etc/nagios4/cgi.cfg
+    regexp: '^authorized_for_configuration_information='
+    line: 'authorized_for_configuration_information=nagiosadmin'
+
+- name: Configure cgi.cfg — authorized_for_system_commands
+  ansible.builtin.lineinfile:
+    path: /etc/nagios4/cgi.cfg
+    regexp: '^authorized_for_system_commands='
+    line: 'authorized_for_system_commands=nagiosadmin'
+
+- name: Configure cgi.cfg — authorized_for_all_services
+  ansible.builtin.lineinfile:
+    path: /etc/nagios4/cgi.cfg
+    regexp: '^authorized_for_all_services='
+    line: 'authorized_for_all_services=nagiosadmin'
+
+- name: Configure cgi.cfg — authorized_for_all_hosts
+  ansible.builtin.lineinfile:
+    path: /etc/nagios4/cgi.cfg
+    regexp: '^authorized_for_all_hosts='
+    line: 'authorized_for_all_hosts=nagiosadmin'
+
+- name: Configure cgi.cfg — authorized_for_all_service_commands
+  ansible.builtin.lineinfile:
+    path: /etc/nagios4/cgi.cfg
+    regexp: '^authorized_for_all_service_commands='
+    line: 'authorized_for_all_service_commands=nagiosadmin'
+
+- name: Configure cgi.cfg — authorized_for_all_host_commands
+  ansible.builtin.lineinfile:
+    path: /etc/nagios4/cgi.cfg
+    regexp: '^authorized_for_all_host_commands='
+    line: 'authorized_for_all_host_commands=nagiosadmin'
+
+- name: Configure nagios.cfg — check_external_commands
+  ansible.builtin.lineinfile:
+    path: /etc/nagios4/nagios.cfg
+    regexp: '^check_external_commands='
+    line: 'check_external_commands=1'
+
+- name: Configure nagios.cfg — event_broker_options
+  ansible.builtin.lineinfile:
+    path: /etc/nagios4/nagios.cfg
+    regexp: '^event_broker_options='
+    line: 'event_broker_options=-1'
+
+- name: Configure nagios.cfg — cfg_dir
+  ansible.builtin.lineinfile:
+    path: /etc/nagios4/nagios.cfg
+    regexp: '^cfg_dir='
+    line: 'cfg_dir=/etc/nagios4/conf.d'
+
+- name: Create event handler directory
+  ansible.builtin.file:
+    path: "{{ event_handler_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copy restart_nginx.sh event handler
+  ansible.builtin.copy:
+    src: eventhandlers/restart_nginx.sh
+    dest: "{{ event_handler_dir }}/restart_nginx.sh"
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create recovery playbook directory
+  ansible.builtin.file:
+    path: "{{ recovery_playbook_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copy restart_nginx.yml recovery playbook
+  ansible.builtin.copy:
+    src: ../../playbooks/recovery/restart_nginx.yml
+    dest: "{{ recovery_playbook_dir }}/restart_nginx.yml"
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Deploy custom_commands.cfg
+  ansible.builtin.template:
+    src: commands.cfg.j2
+    dest: "{{ nagios_conf_d }}/custom_commands.cfg"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart nagios4
+
+- name: Deploy custom_contacts.cfg
+  ansible.builtin.template:
+    src: contacts.cfg.j2
+    dest: "{{ nagios_conf_d }}/custom_contacts.cfg"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart nagios4
+
+- name: Deploy custom_hosts.cfg
+  ansible.builtin.template:
+    src: hosts.cfg.j2
+    dest: "{{ nagios_conf_d }}/custom_hosts.cfg"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart nagios4
+
+- name: Deploy custom_services.cfg
+  ansible.builtin.template:
+    src: services.cfg.j2
+    dest: "{{ nagios_conf_d }}/custom_services.cfg"
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Restart nagios4
+
+- name: Validate Nagios configuration
+  ansible.builtin.command: nagios4 -v /etc/nagios4/nagios.cfg
+  changed_when: false
+  register: nagios_verify
+  failed_when: nagios_verify.rc != 0
+
+- name: Enable and start nagios4
+  ansible.builtin.service:
+    name: nagios4
+    state: started
+    enabled: true
+
+- name: Enable and start apache2
+  ansible.builtin.service:
+    name: apache2
+    state: started
+    enabled: true

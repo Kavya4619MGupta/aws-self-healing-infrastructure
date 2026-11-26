@@ -1,0 +1,57 @@
+---
+- name: Install NRPE and Nagios plugins
+  ansible.builtin.apt:
+    name:
+      - nagios-nrpe-server
+      - nagios-plugins
+      - nagios-plugins-basic
+      - nagios-plugins-standard
+    state: present
+    update_cache: true
+
+- name: Configure NRPE — allowed hosts
+  ansible.builtin.lineinfile:
+    path: /etc/nagios/nrpe.cfg
+    regexp: '^allowed_hosts='
+    line: "allowed_hosts=127.0.0.1,{{ nagios_server_private_ip | default('10.0.0.0/8') }}"
+  notify: Restart nrpe
+
+- name: Configure NRPE — dont_blame_nrpe (enable args)
+  ansible.builtin.lineinfile:
+    path: /etc/nagios/nrpe.cfg
+    regexp: '^dont_blame_nrpe='
+    line: 'dont_blame_nrpe=1'
+  notify: Restart nrpe
+
+- name: Add check_mem command to nrpe.cfg
+  ansible.builtin.lineinfile:
+    path: /etc/nagios/nrpe.cfg
+    line: 'command[check_mem]=/usr/lib/nagios/plugins/check_memory -w 20% -c 10%'
+    state: present
+  notify: Restart nrpe
+
+- name: Add check_disk command to nrpe.cfg
+  ansible.builtin.lineinfile:
+    path: /etc/nagios/nrpe.cfg
+    line: 'command[check_disk]=/usr/lib/nagios/plugins/check_disk -w 20% -c 10% -p /'
+    state: present
+  notify: Restart nrpe
+
+- name: Add check_load command to nrpe.cfg
+  ansible.builtin.lineinfile:
+    path: /etc/nagios/nrpe.cfg
+    line: 'command[check_load]=/usr/lib/nagios/plugins/check_load -w 15,10,5 -c 30,25,20'
+    state: present
+  notify: Restart nrpe
+
+- name: Allow NRPE port via UFW
+  community.general.ufw:
+    rule: allow
+    port: "{{ nrpe_port }}"
+    proto: tcp
+
+- name: Enable and start NRPE service
+  ansible.builtin.service:
+    name: nagios-nrpe-server
+    state: started
+    enabled: true

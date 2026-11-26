@@ -1,0 +1,74 @@
+# =============================================================================
+# terraform.tfvars.example
+# Copy this file to terraform.tfvars and fill in your values before deploying.
+# NEVER commit terraform.tfvars to source control — it may contain secrets.
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# General
+# -----------------------------------------------------------------------------
+
+# Prefix applied to all AWS resource names (e.g. "myproject-dev-vpc")
+project_name = "aws-auto-infra"
+
+# Deployment environment tag (dev | staging | prod)
+environment = "dev"
+
+# AWS region to deploy into. eu-north-1 (Stockholm) has t3.micro free-tier.
+aws_region = "eu-north-1"
+
+# -----------------------------------------------------------------------------
+# Networking
+# -----------------------------------------------------------------------------
+
+# VPC CIDR — must not overlap with on-premises or peered VPCs
+vpc_cidr = "10.0.0.0/16"
+
+# Two public subnets spread across two AZs (for LB and Nagios)
+public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
+
+# Two private subnets spread across two AZs (for web nodes via NAT Gateway)
+private_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
+
+# -----------------------------------------------------------------------------
+# Security — IMPORTANT: restrict these CIDRs in production!
+# -----------------------------------------------------------------------------
+
+# Your public IP in CIDR notation — only this IP can SSH to public instances.
+# Example: "203.0.113.42/32"  (replace with `curl -s ifconfig.me`/32)
+allowed_ssh_cidr = "0.0.0.0/0"
+
+# IP(s) allowed to view the Nagios web dashboard on port 80.
+# Restrict to your office/VPN CIDR in production.
+allowed_nagios_ui_cidr = "0.0.0.0/0"
+
+# -----------------------------------------------------------------------------
+# Instance types (all t3.micro to stay within AWS free tier)
+# -----------------------------------------------------------------------------
+
+lb_instance_type     = "t3.micro"
+web_instance_type    = "t3.micro"
+nagios_instance_type = "t3.micro"
+
+# Number of web nodes to provision (2 for HA load balancing demo)
+web_node_count = 2
+
+# -----------------------------------------------------------------------------
+# SSH Key Pair
+# -----------------------------------------------------------------------------
+
+# Leave blank to auto-generate a 4096-bit RSA key pair.
+# To use an existing key pair already uploaded to EC2, set its Name here:
+# existing_key_name = "my-existing-keypair"
+existing_key_name = ""
+
+# -----------------------------------------------------------------------------
+# Nagios Configuration
+# -----------------------------------------------------------------------------
+
+# Password for the nagiosadmin web UI account.
+# Override securely: export TF_VAR_nagios_admin_password="<strong-password>"
+nagios_admin_password = "ChangeMeNagios123!"
+
+# Email address for Nagios alert notifications (configure SMTP in Ansible)
+alert_email = "admin@example.com"

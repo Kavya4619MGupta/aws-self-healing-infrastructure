@@ -1,0 +1,77 @@
+# Services for each web node
+{% for node in web_nodes %}
+define service {
+    use                     generic-service
+    host_name               web-node-{{ loop.index }}
+    service_description     HTTP Check
+    check_command           check_http
+    max_check_attempts      4
+    check_interval          2
+    retry_interval          1
+    notification_interval   10
+    check_period            24x7
+    notification_period     24x7
+    contacts                nagiosadmin
+    event_handler           restart_nginx_event_handler
+    event_handler_enabled   1
+}
+
+define service {
+    use                     generic-service
+    host_name               web-node-{{ loop.index }}
+    service_description     HTTP Health Endpoint
+    check_command           check_http_string!/health!"status"
+    max_check_attempts      4
+    check_interval          2
+    retry_interval          1
+    contacts                nagiosadmin
+    event_handler           restart_nginx_event_handler
+    event_handler_enabled   1
+}
+
+define service {
+    use                     generic-service
+    host_name               web-node-{{ loop.index }}
+    service_description     CPU Load
+    check_command           check_nrpe!check_load
+    max_check_attempts      4
+    check_interval          5
+    retry_interval          2
+    contacts                nagiosadmin
+}
+
+define service {
+    use                     generic-service
+    host_name               web-node-{{ loop.index }}
+    service_description     Disk Usage
+    check_command           check_nrpe!check_disk
+    contacts                nagiosadmin
+}
+
+define service {
+    use                     generic-service
+    host_name               web-node-{{ loop.index }}
+    service_description     Memory Usage
+    check_command           check_nrpe!check_mem
+    contacts                nagiosadmin
+}
+{% endfor %}
+
+# Services for LB
+define service {
+    use                     generic-service
+    host_name               lb-server
+    service_description     HTTP Load Balancer
+    check_command           check_http
+    max_check_attempts      3
+    check_interval          2
+    contacts                nagiosadmin
+}
+
+define service {
+    use                     generic-service
+    host_name               lb-server
+    service_description     PING
+    check_command           check_ping!100.0,20%!500.0,60%
+    contacts                nagiosadmin
+}
