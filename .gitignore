@@ -1,15 +1,18 @@
-# Terraform state and cache
+# Terraform state, cache, and execution plans
 **/.terraform/
 *.tfstate
 *.tfstate.*
 *.tfvars
 !terraform.tfvars.example
 .terraform.lock.hcl
+*tfplan*
+*.tfplan
 
 # Generated SSH keys and dynamic Ansible runtime files
 .ssh/
-ansible/inventory/hosts.ini
-ansible/group_vars/all/generated.yml
+*.pem
+**/hosts.ini
+**/generated.yml
 *.retry
 
 # OS / Editor
