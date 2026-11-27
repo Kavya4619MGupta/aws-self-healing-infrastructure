@@ -4,6 +4,7 @@ system_timezone: "UTC"
 
 # Nagios config
 nagios_admin_user: nagiosadmin
+nagios_server_private_ip: "{{ nagios_private_ip | default('10.0.0.0/8') }}"
 nrpe_port: 5666
 nagios_config_dir: /etc/nagios4
 nagios_conf_d: /etc/nagios4/conf.d
